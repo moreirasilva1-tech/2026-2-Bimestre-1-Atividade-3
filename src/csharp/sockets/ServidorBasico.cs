@@ -1,3 +1,5 @@
+
+
 using System;
 using System.Net;
 using System.Net.Sockets;
@@ -9,34 +11,33 @@ namespace AtividadeComunicação
     {
         public static void Principal()
         {
-            // Definir endereço IP e porta
-            IPAddress enderecoIP = IPAddress.Parse("127.0.0.1");
+            string host = Environment.GetEnvironmentVariable("SERVER_HOST") ?? "127.0.0.1";
+            IPAddress enderecoIP = IPAddress.Parse(host);
             int porta = 5000;
 
-            // Criar um TcpListener (equivalente ao socket servidor)
             TcpListener servidor = new TcpListener(enderecoIP, porta);
 
             try
             {
-                // Iniciar escuta por conexões (equivalente ao bind e listen)
                 servidor.Start();
-                Console.WriteLine($"Servidor escutando em localhost:{porta}");
+                Console.WriteLine($"Servidor escutando em {enderecoIP}:{porta}");
 
-                // Aguardar por uma conexão (equivalente ao accept)
-                TcpClient conexao = servidor.AcceptTcpClient();
-                Console.WriteLine($"Conexão estabelecida com {conexao.Client.RemoteEndPoint}");
-
-                // Enviar mensagem
-                string mensagem = "Bem-vindo ao servidor!";
-                byte[] dados = Encoding.UTF8.GetBytes(mensagem);
-
-                using (NetworkStream stream = conexao.GetStream())
+                using (TcpClient cliente = servidor.AcceptTcpClient())
                 {
-                    stream.Write(dados, 0, dados.Length);
+                    Console.WriteLine($"Cliente conectado: {cliente.Client.RemoteEndPoint}");
+
+                    using (NetworkStream stream = cliente.GetStream())
+                    {
+                        string mensagem = "Bem-vindo ao servidor!";
+                        byte[] dados = Encoding.UTF8.GetBytes(mensagem);
+
+                        stream.Write(dados, 0, dados.Length);
+
+                        Console.WriteLine($"Mensagem enviada: {mensagem}");
+                    }
                 }
 
-                // Fechar a conexão
-                conexao.Close();
+                Console.WriteLine("Servidor encerrado.");
             }
             catch (Exception ex)
             {
@@ -44,9 +45,7 @@ namespace AtividadeComunicação
             }
             finally
             {
-                // Encerrar o servidor
                 servidor.Stop();
-                Console.WriteLine("Servidor encerrado");
             }
         }
     }
